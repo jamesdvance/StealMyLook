@@ -1,6 +1,7 @@
 import json
 import base64
 import numpy as np
+from torchvision import models, transforms
 from PIL import Image
 import torch.nn as nn
 from io import BytesIO
@@ -12,6 +13,14 @@ model = AutoModelForSemanticSegmentation.from_pretrained("mattmdjaga/segformer_b
 Labels ={ 0: "Background", 1: "Hat", 2: "Hair", 3: "Sunglasses", 4: "Upper-clothes", 5: "Skirt", 6: "Pants", 7: "Dress", 8: "Belt", 9: "Left-shoe", 10: "Right-shoe", 11: "Face", 12: "Left-leg", 13: "Right-leg", 14: "Left-arm", 15: "Right-arm", 16: "Bag", 17: "Scarf"}
 nums = range(1,17)
 labels_reverse = {"Upper-clothes":4, "Pants":6, "shoes": (9,10)}
+vgg16_model = models.vgg16(pretrained=True)
+vgg16_model.classifier = vgg16_model.classifier[:-1] # convert to embedding 
+transform = transforms.Compose([
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+])
 
 def lambda_handler(event, context):
     #print("Received event: " + json.dumps(event, indent=2))
@@ -46,7 +55,7 @@ def lambda_handler(event, context):
     # shoes
 
     # Retreive Similarities
-    
+
     # Format Metadata
     
     return json.dumps({"success": 1, "image":my_string})
