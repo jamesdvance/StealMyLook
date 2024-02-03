@@ -1,6 +1,7 @@
 import json
 import base64
 import numpy as np
+import torch
 from torchvision import models, transforms
 from PIL import Image
 import torch.nn as nn
@@ -42,11 +43,32 @@ def lambda_handler(event, context):
 
     pred_seg = upsampled_logits.argmax(dim=1)[0]
     orig_arr = np.asarray(image)
+    # Shirt
     shirt_arr = orig_arr.copy()
     shirt_arr[pred_seg!=4] = [255,255,255]
+    # Pants
+    pants_arr = orig_arr.copy()
+    pants_arr[pred_seg!=7] = [255,255,255]
+    # Skirt
+    skirt_arr = orig_arr.copy()
+    skirt_arr[pred_seg!=5] = [255,255,255]
+    # Shoes
+    shirt_arr = orig_arr.copy()
+    shirt_arr[(pred_seg!=9)|(pred_seg!=10)] = [255,255,255]
+    
     # Convert Segments to Embeddings
+    shirt_tensor = transform(Image.fromarray(shirt_arr))
+    shirt_batch = shirt_tensor.unsqueeze(0) 
 
-    # shirt 
+    with torch.no_grad():
+        output = vgg16_model(shirt_batch)
+
+    shirt_vec = output.numpy().flatten()
+
+
+    # shirt
+
+
 
     # pants 
 
@@ -58,4 +80,11 @@ def lambda_handler(event, context):
 
     # Format Metadata
     
-    return json.dumps({"success": 1, "image":my_string})
+    return {
+        "isBase64Encoded": False,
+        "statusCode": 200,
+        "body": json.dumps(response),
+        "headers": {
+            "content-type": "application/json"
+  }
+}
